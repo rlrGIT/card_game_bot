@@ -1,5 +1,5 @@
-from gamebot import default_bot, start 
+from bot import Bot
 
 if __name__ == '__main__':
-    start(default_bot())
+    Bot().launch()
     
