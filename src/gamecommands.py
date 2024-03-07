@@ -4,10 +4,22 @@ from disnake.ext import commands
 from gamestate import GameState
 from player import Player
 
+"""
+    TODO: might be worth making some of these
+    TaskGroups or using asyncio.gather() to avoid
+    overusing the await keyword...
+
+    sync game state in phases to make sure we are accessing
+    complete information - do this with tasks and have the bot
+    run automatically
+"""
+
 class GameCommands(commands.Cog):
     CMD_NEW_GAME = 'new'
     CMD_ADD_PLAYER = 'add'
     CMD_REM_PLAYER = 'remove'
+    CMD_DEAL = 'deal'
+    CMD_DEAL_ALL = 'deal_all'
 
     def __init__(self, bot : commands.Bot) -> None:
         self.bot = bot
@@ -26,8 +38,13 @@ class GameCommands(commands.Cog):
         await self.bot.respond_with(inter, 'Starting...')
         self.in_game = True
 
+        print('Loading deck...')
+        self.state.load_cards()
+        print('Done.')
+
         # assert that this isn't in a DM
         if inter.channel:
+            # TODO the above line does not adequitely check for a DM - partialmessageable is returned 
             for user in inter.channel.members:
                 _ = await self.add_player(inter, user)
 
@@ -38,10 +55,33 @@ class GameCommands(commands.Cog):
 
 
     @commands.slash_command(
+        name=CMD_DEAL_ALL,
+        description='Load cards if needed, deal to all players'
+    )
+    async def deal_all(self, inter) -> None:
+        pass
+
+    @commands.slash_command(
+        name=CMD_DEAL,
+        description='Load cards if needed, deal to one player'
+    )
+    async def deal_to(self, inter, user : disnake.User) -> None:
+        # maybe create a decorator for where these command can be invoked
+        # instead of checking inter context
+        player = self.state.players.get(user.display_name, None)
+        if player:
+            self.state.deal_hand(player)
+            """
+
+                BAD - for debugging only
+            for card in player.cards.keys():
+                await self.bot.dm_user(user, card)
+            """
+    @commands.slash_command(
         name=CMD_ADD_PLAYER,
         description='Add a new player to an existing game'
     )
-    async def add_player(self, inter : disnake.ApplicationCommandInteraction, user : disnake.User) -> None:
+    async def add_player(self, inter, user : disnake.User) -> None:
         name : str = user.display_name
         await self.bot.respond_with(inter, 'Adding player: {}'.format(name))
 
@@ -57,7 +97,7 @@ class GameCommands(commands.Cog):
         name=CMD_REM_PLAYER,
         description='Remove a new player from the game'
     )
-    async def remove_player(self, inter : disnake.ApplicationCommandInteraction, user : disnake.User) -> None:
+    async def remove_player(self, inter, user : disnake.User) -> None:
         name : str = user.display_name
         await self.bot.respond_with(inter, 'Removing player: {}'.format(name))
 
