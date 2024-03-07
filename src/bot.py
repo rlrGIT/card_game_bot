@@ -48,7 +48,7 @@ class Bot(commands.InteractionBot):
                 print(file_size)
 
 
-    async def respond_with(self, inter : disnake.Interaction, msg : str) -> None:
+    async def inter_response(self, inter : disnake.Interaction, msg : str) -> None:
         try:
             await inter.send(content=msg)
 
