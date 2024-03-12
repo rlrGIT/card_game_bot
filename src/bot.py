@@ -32,41 +32,8 @@ class Bot(commands.InteractionBot):
     async def permissions_check(self, inter) -> bool:
         return await self.is_owner(inter.author)
 
-
-    async def dm_user(self, user : disnake.User, msg : str) -> None:
-        if not user.bot:
-            try:
-                await user.send(content=msg)
-
-            except disnake.errors.HTTPException as failed_to_send:
-                print(failed_to_send)
-            except disnake.Forbidden as permissions:
-                print(permissions)
-            except TypeError as type_error:
-                print(type_error)
-            except ValueError as file_size:
-                print(file_size)
-
-
-    async def inter_response(self, inter : disnake.Interaction, msg : str) -> None:
-        try:
-            await inter.send(content=msg)
-
-        except disnake.errors.HTTPException as failed_to_send:
-            print(failed_to_send)
-        except disnake.Forbidden as permissions:
-            print(permissions)
-        except TypeError as type_error:
-            print(type_error)
-        except ValueError as file_size:
-            print(file_size)
-
-    
-
     def launch(self) -> None:
         load_dotenv()
         TOKEN : Final[str] = os.getenv('DISCORD_TOKEN')
-        # need this for each cog
-        #self.add_app_command_check(slash_commands=True)
         self.load_extension(self.GAME_COG)
         self.run(token=TOKEN)
