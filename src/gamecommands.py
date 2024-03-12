@@ -8,7 +8,6 @@ class GameCommands(commands.Cog):
     CMD_NEW_GAME = 'new'
     CMD_ADD_PLAYER = 'add'
     CMD_REM_PLAYER = 'remove'
-    CMD_DEAL = 'deal'
 
     def __init__(self, bot : commands.Bot) -> None:
         self.bot = bot
@@ -16,10 +15,18 @@ class GameCommands(commands.Cog):
         self.state = GameState()
     
 
+    # make me take arguments
+    def game_running() -> None:
+        def game_status(ctx) -> bool:
+            return self.in_game
+        return commands.check(game_status)
+
+
     @commands.slash_command(
         name=CMD_NEW_GAME,
         description='Start a new game with all present members'
     )
+    @commands.guild_only()
     async def new_game(self, inter) -> None:
         if self.in_game:
             await inter.send('Game instance already running')
@@ -43,11 +50,12 @@ class GameCommands(commands.Cog):
         name=CMD_ADD_PLAYER,
         description='Add a new player to an existing game'
     )
+    @commands.guild_only()
     async def add_player(self, inter, user : disnake.User) -> None:
         name : str = user.display_name
-        await inter.send('Adding player: {}'.format(name))
-
         player = self.state.add_player(name)
+        await inter.send('Added player: {}'.format(name))
+
         if player:
             await inter.send('{} joined the game!'.format(name))
             await self._deal_to(inter, user)
@@ -61,13 +69,13 @@ class GameCommands(commands.Cog):
         name=CMD_REM_PLAYER,
         description='Remove a new player from the game'
     )
+    @commands.guild_only()
     async def remove_player(self, inter, user : disnake.User) -> None:
         player = self.state.remove_player(user.display_name)
         if player:
             await inter.send('{} was removed from the game.'.format(player.name))
         else:
             await inter.send('Player not found...')
-
 
     async def _deal_to(self, inter, user : disnake.User) -> None:
         player = self.state.players[user.display_name]
@@ -80,6 +88,6 @@ class GameCommands(commands.Cog):
             except disnake.errors.HTTPException as permissions_issue:
                 pass
 
-
 def setup(bot : commands.Bot) -> None:
     bot.add_cog(GameCommands(bot))
+
